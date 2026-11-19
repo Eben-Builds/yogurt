@@ -25,9 +25,9 @@ export type Llm = {
 export type PartSummary = { lines: string[]; summary: string }
 
 /** room left for the notes themselves */
-export const NOTES_TOKENS = 2048
+export const NOTES_TOKENS = 2560
 /** each part's summary of a long meeting */
-export const SUMMARY_TOKENS = 700
+export const SUMMARY_TOKENS = 900
 /** a long meeting is read in parts of at most this: smaller parts keep more detail */
 export const MAX_PART_TOKENS = 12_000
 
@@ -112,11 +112,13 @@ export function enhancePrompt(i: PromptInput): string {
     peopleRule,
     ...(i.spelling ? [i.spelling] : []),
     '- Markdown only. Start right away with the first "## " topic: no title, no introduction, nothing after the last bullet.',
-    '- Notes are about the work: customers, deals and prices, numbers, plans, problems, launches, what each person is working on, what was decided. Leave out what was off topic: small talk, greetings, weekends and trips, hobbies, side projects, jokes, gear, errands and other personal chat, and talk about the call itself. Something personal goes in only if the meeting was about it.',
+    '- Keep what is relevant to the recording. Leave out off-topic small talk, greetings, side projects, jokes, errands and interruptions about the call itself.',
+    '- Match the recording. For a lecture, sermon or presentation, preserve the main argument, explanations and examples. For a meeting, preserve the reasoning behind decisions, alternatives, open questions and agreed actions. Include only what the source supports.',
     '- One "## " section per topic, most important first, each named after what it is about in a few specific words (like "Pricing for Acme renewal" or "Desktop app launch", never "Discussion", "Updates" or "Topic 1"). Bring together what was said about one topic at different times. When people took turns giving their own updates, a section per person, like "## Maya\'s updates", works well.',
-    '- Under each topic, "- " bullets with real substance: what was said, found, proposed or decided, and why. Keep the concrete details: names of customers and companies, numbers, prices, dates, tools, and who said it when that matters. A bullet is one full point of up to about 20 words, starting with the point (never "The team discussed"). More detail goes in "  - " bullets under it.',
+    '- Under each topic, use complete "- " bullets that state the point and explain why it matters. Add "  - " sub-bullets for supporting details. Keep relevant examples, names, numbers, prices and dates.',
     '- A decision or an open question goes in its topic, said plainly ("Decided: no paid placements for now").',
     '- Cover the whole meeting, the end as well. A short meeting gets fewer sections, not thinner ones.',
+    '- Let the amount of information in the source determine the length. Cover every substantive topic with enough context for someone who missed it to understand. Keep distinct examples, figures, disagreements, and stated owners and deadlines. Omit repetition and filler.',
     '- **Bold** rarely: a deadline, a big number or a key term, a few times in all.',
     ...(mine ? [
       '- Their notes steer these: what they flagged gets a "## " topic or a bullet of its own, and facts they typed that the transcript lacks go in, in the topic they belong to.',
@@ -145,8 +147,8 @@ export function summaryPrompt(part: string, n: number, language: string): string
   return [
     summaryHead(n) + part, '</transcript>',
     '',
-    `Write compact notes on this part only, in ${lang}: every topic discussed with its concrete details (numbers, dates, names, tools, examples), what was decided, open questions, and who agreed to do what (by name, "You" for the person taking notes).`,
-    'Short "- " bullets grouped under a "### " line naming the topic. Nothing else: no introduction, no closing line.',
+    `Write faithful notes on this part only, in ${lang}. For every substantive topic, keep the reasoning, examples, names, figures, decisions, open questions and agreed actions, including stated owners and deadlines. Preserve uncertainty and never fill in missing details.`,
+    'Use complete "- " bullets and supporting sub-bullets under a "### " line naming each topic. Start with the most important points of this part. Nothing else: no introduction, no closing line.',
   ].join('\n')
 }
 

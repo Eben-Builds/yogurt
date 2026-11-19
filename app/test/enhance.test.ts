@@ -76,6 +76,13 @@ describe('enhancePrompt: notes that read like a good note-taker wrote them', () 
       expect(p).toMatch(/fewer sections/)
     }
   })
+  it('keeps detail in both final notes and the intermediate notes for long recordings', () => {
+    const final = enhancePrompt({ ...base, parts: true })
+    expect(final).toContain('Let the amount of information in the source determine the length')
+    expect(final).toContain('reasoning behind decisions, alternatives, open questions and agreed actions')
+    expect(final).not.toContain('up to about 20 words')
+    expect(summaryPrompt(transcript, 1, 'English')).toContain('including stated owners and deadlines')
+  })
   it('with one other person invited, "Them" is that person', () => {
     expect(enhancePrompt({ ...base, attendees: [{ name: 'Dana Lund', email: null }] })).toContain('"Them" is Dana Lund')
     // the person who recorded it is not the other one
